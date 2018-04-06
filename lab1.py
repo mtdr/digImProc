@@ -38,11 +38,6 @@ def add_points(image, angle):
     for i in reversed(range(0, size[1], 1)):
         res.append(findCoord([0, i], angle, image))
 
-    # for j in range(0, size[1] + 1, 1):
-    # for i in range(0, size[0] + 1, 1):
-    # res.append(findCoord([i, j], angle, image))
-    # print(image.shape)
-    # print(len(res))
     return res
 
 
@@ -86,7 +81,6 @@ def getNewMatrix(image, borders):
             if [j, i] in borders:
                 res[i][j] = 1
                 cr += 1
-    print(cr)
     return res
 
 
@@ -140,7 +134,6 @@ def cadane(matrix):
             t = 0
             h = 0
             for j in range(0, m, 1):
-                # if a[i][j] == 1:
                 p[j] = p[j] + a[i][j]
                 t = t + p[j]
                 if t > M:
@@ -150,21 +143,10 @@ def cadane(matrix):
                 if t <= 0:
                     t = 0
                     h = j + 1  # intel error
-            # else:
-            #     t = 0
-            #     h = j + 1
     return M, P1, P2
 
 
-def mssl(x):
-    max_ending_here = max_so_far = 0
-    for a in x:
-        max_ending_here = max(0, max_ending_here + a)
-        max_so_far = max(max_so_far, max_ending_here)
-    return max_so_far
-
-
-def kad_c(arr, start, finish, n):
+def kad_c(arr, start, n):
     sumK = 0
     max_sum = -sys.maxsize - 1
     finish = -1
@@ -202,7 +184,7 @@ def find_max(matrix):
         for right in range(left, COL, 1):
             for it1 in range(0, ROW, 1):
                 temp[it1] += matrix[it1][right]
-            sum1, start, finish = kad_c(temp, start, finish, ROW)
+            sum1, start, finish = kad_c(temp, start, ROW)
 
             if sum1 > max_sum:
                 max_sum = sum1
@@ -231,7 +213,7 @@ def fill_matr(matrix):
     return res
 
 
-def main(image, angle, k, inter):
+def main(image, angle, k_i, inter_k):
     final_wide = 500
     r = float(final_wide) / image.shape[1]
     dim = (final_wide, int(image.shape[0] * r))
@@ -248,7 +230,7 @@ def main(image, angle, k, inter):
     onematrix = getNewMatrix(rotated, filtered)
     filled = fill_matr(onematrix)
     result = intel_alg(filled)
-    result1 = c_alg(filled)
+    # result1 = c_alg(filled)
 
     cv2.imshow("Rotated image", rotated)
     cv2.waitKey(0)
@@ -257,8 +239,8 @@ def main(image, angle, k, inter):
     cv2.imshow("Cropped image", cropped)
     cv2.waitKey(0)
 
-    dim1 = (int(cropped.shape[1] / k), int(cropped.shape[0] / k))
-    interpol = cv2.resize(cropped, dim1, interpolation=inter + 1)
+    dim1 = (int(cropped.shape[1] / k_i), int(cropped.shape[0] / k_i))
+    interpol = cv2.resize(cropped, dim1, interpolation=inter_k + 1)
     cv2.imshow("Interpolated image", interpol)
     cv2.waitKey(0)
     cv2.imwrite('01.bmp', interpol)
@@ -272,21 +254,22 @@ def intel_alg(matr):
 
 def c_alg(matr):
     c = find_max(matr)
-    print("Top Left y0 = ", c[1][0], " x0 = ", c[1][1])
-    print("Bottom Right y1 = ", c[2][0], " x1 = ", c[2][1])
-    print("Max val is ", c[0])
+    print(c)
+    # print("Top Left y0 = ", c[1][0], " x0 = ", c[1][1])
+    # print("Bottom Right y1 = ", c[2][0], " x1 = ", c[2][1])
+    # print("Max val is ", c[0])
     return c
 
 
 if len(sys.argv) == 5:
-    image = sys.argv[1]
-    angle = sys.argv[2]
+    img = sys.argv[1]
+    ang = sys.argv[2]
     k = sys.argv[3]
     inter = sys.argv[4]
 else:
-    image = cv2.imread("big.jpg")
-    angle = 350
+    img = cv2.imread("big.jpg")
+    ang = 350
     k = 0.5
     inter = 2  # linear - 0, cubic - 1, area - 2
 
-main(image, angle, k, inter)
+main(img, ang, k, inter)

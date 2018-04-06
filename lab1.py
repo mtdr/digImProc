@@ -78,7 +78,7 @@ def getNewMatrix(image, borders):
     res = np.zeros([image.shape[0], image.shape[1]], int)
     for j in range(0, image.shape[1], 1):
         for i in range(0, image.shape[0], 1):
-            res[i][j] = -1
+            res[i][j] = -1000
     cr = 0
     size = image.shape[1], image.shape[0]
     for j in range(0, size[0], 1):
@@ -140,19 +140,19 @@ def cadane(matrix):
             t = 0
             h = 0
             for j in range(0, m, 1):
-                if a[i][j] == 1:
-                    p[j] = p[j] + a[i][j]
-                    t = t + p[j]
-                    if t > M:
-                        M = t
-                        P1 = [g, h]
-                        P2 = [i, j]
-                    if t <= 0:
-                        t = 0
-                        h = j + 1 # intel error
-                else:
+                # if a[i][j] == 1:
+                p[j] = p[j] + a[i][j]
+                t = t + p[j]
+                if t > M:
+                    M = t
+                    P1 = [g, h]
+                    P2 = [i, j]
+                if t <= 0:
                     t = 0
-                    h = j + 1
+                    h = j + 1  # intel error
+            # else:
+            #     t = 0
+            #     h = j + 1
     return M, P1, P2
 
 
@@ -170,28 +170,27 @@ def kad_c(arr, start, finish, n):
     finish = -1
     local_start = 0
     for i in range(0, n, 1):
-        if arr[i] == 1:
-            sumK += arr[i]
-            if sumK < 0:
-                sumK = 0
-                local_start = i + 1
-            else:
-                if sumK > max_sum:
-                    max_sum = sumK
-                    start = local_start
-                    finish = i
+        sumK += arr[i]
+        if sumK < 0:
+            sumK = 0
+            local_start = i + 1
+        else:
+            if sumK > max_sum:
+                max_sum = sumK
+                start = local_start
+                finish = i
 
     if finish != -1:
         return max_sum, start, finish
 
-    # max_sum = arr[0]
-    # start = finish = 0
-    # for i in range(1, n, 1):
-    #     if arr[i] > max_sum:
-    #         max_sum = arr[i]
-    #         start = finish = i
-    #
-    # return max_sum, start, finish
+    max_sum = arr[0]
+    start = finish = 0
+    for i in range(1, n, 1):
+        if arr[i] > max_sum:
+            max_sum = arr[i]
+            start = finish = i
+
+    return max_sum, start, finish
 
 
 def find_max(matrix):
@@ -202,7 +201,7 @@ def find_max(matrix):
         temp = [0] * ROW
         for right in range(left, COL, 1):
             for it1 in range(0, ROW, 1):
-                temp[it1] = matrix[it1][right]
+                temp[it1] += matrix[it1][right]
             sum1, start, finish = kad_c(temp, start, finish, ROW)
 
             if sum1 > max_sum:
@@ -211,9 +210,8 @@ def find_max(matrix):
                 finalRight = right
                 finalTop = start
                 finalBottom = finish
-    print("Top Left y0 = ", finalTop, " x0 = ", finalLeft)
-    print("Bottom Right y1 = ", finalBottom, " x1 = ", finalRight)
-    print("Max val is ", max_sum)
+
+    return max_sum, [finalTop, finalLeft], [finalBottom, finalRight]
 
 
 def fill_matr(matrix):
@@ -265,7 +263,8 @@ def main():
     filtered = filter_border(new_borders, w, h)
     onematrix = getNewMatrix(rotated, filtered)
     filled = fill_matr(onematrix)
-    coords = work(filled)
+    result = intel_alg(filled)
+    result1 = c_alg(filled)
     # rotatedM = np.ones([rotated.shape[0], rotated.shape[1]], int)
 
     # test = np.zeros([3, 5], int)
@@ -281,17 +280,23 @@ def main():
 
     # cropped = rotated[30:130, 150:300]
     # cropped = rotated[0:50, 375:499]
-    cropped = rotated[coords[0][0]:coords[1][0], coords[0][1]:coords[1][1]]
+    cropped = rotated[result[1][0]:result[2][0], result[1][1]:result[2][1]]
     cv2.imshow("Cropped image", cropped)
     cv2.waitKey(0)
 
 
-def work(matr):
+def intel_alg(matr):
     c = cadane(matr)
     print(c)
-    print(matr.shape)
-    print(find_max(matr))
-    return c[1], c[2]
+    return c
+
+
+def c_alg(matr):
+    c = find_max(matr)
+    print("Top Left y0 = ", c[1][1], " x0 = ", c[1][0])
+    print("Bottom Right y1 = ", c[2][1], " x1 = ", c[2][0])
+    print("Max val is ", c[0])
+    return c
 
 
 main()

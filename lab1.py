@@ -231,33 +231,17 @@ def fill_matr(matrix):
     return res
 
 
-def main():
-    image = cv2.imread("tram.jpg")
-    # Нам надо сохранить соотношение сторон
-    # чтобы изображение не исказилось при уменьшении
-    # для этого считаем коэф. уменьшения стороны
+def main(image, angle, k, inter):
     final_wide = 500
     r = float(final_wide) / image.shape[1]
     dim = (final_wide, int(image.shape[0] * r))
-
-    # уменьшаем изображение до подготовленных размеров
     resized = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
-    # cv2.imshow("Resize image", resized)
-    # cv2.waitKey(0)
 
-    # получим размеры изображения для поворота
-    # и вычислим центр изображения
     (h, w) = resized.shape[:2]
     center = (w / 2, h / 2)
 
-    angle = 70
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
-    rotated = cv2.warpAffine(resized, M, (w, h))
-
-    p_right_center = [center[0] + w / 2, center[1]]
-    # getResult(p_right_center, angle)
-    # getResult([rotated.shape[1], rotated.shape[0]], angle, rotated)
-    # getResult([0, h], angle, rotated)
+    m = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(resized, m, (w, h))
 
     new_borders = add_points(rotated, angle)
     filtered = filter_border(new_borders, w, h)
@@ -265,24 +249,19 @@ def main():
     filled = fill_matr(onematrix)
     result = intel_alg(filled)
     result1 = c_alg(filled)
-    # rotatedM = np.ones([rotated.shape[0], rotated.shape[1]], int)
-
-    # test = np.zeros([3, 5], int)
-    # for j in range(0, test.shape[1], 1):
-    #     for i in range(0, test.shape[0], 1):
-    #         test[i][j] = -1
-    # for i in range(0, test.shape[0], 1):
-    #     test[i][2] = test[i][3] = 1
-    # test[1][4] = 1
 
     cv2.imshow("Rotated image", rotated)
     cv2.waitKey(0)
 
-    # cropped = rotated[30:130, 150:300]
-    # cropped = rotated[0:50, 375:499]
     cropped = rotated[result[1][0]:result[2][0], result[1][1]:result[2][1]]
     cv2.imshow("Cropped image", cropped)
     cv2.waitKey(0)
+
+    dim1 = (int(cropped.shape[1] / k), int(cropped.shape[0] / k))
+    interpol = cv2.resize(cropped, dim1, interpolation=inter + 1)
+    cv2.imshow("Interpolated image", interpol)
+    cv2.waitKey(0)
+    cv2.imwrite('01.bmp', interpol)
 
 
 def intel_alg(matr):
@@ -293,10 +272,21 @@ def intel_alg(matr):
 
 def c_alg(matr):
     c = find_max(matr)
-    print("Top Left y0 = ", c[1][1], " x0 = ", c[1][0])
-    print("Bottom Right y1 = ", c[2][1], " x1 = ", c[2][0])
+    print("Top Left y0 = ", c[1][0], " x0 = ", c[1][1])
+    print("Bottom Right y1 = ", c[2][0], " x1 = ", c[2][1])
     print("Max val is ", c[0])
     return c
 
 
-main()
+if len(sys.argv) == 5:
+    image = sys.argv[1]
+    angle = sys.argv[2]
+    k = sys.argv[3]
+    inter = sys.argv[4]
+else:
+    image = cv2.imread("big.jpg")
+    angle = 350
+    k = 0.5
+    inter = 2  # linear - 0, cubic - 1, area - 2
+
+main(image, angle, k, inter)

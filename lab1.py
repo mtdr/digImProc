@@ -1,9 +1,7 @@
 from math import *
 
 import cv2
-
-x_shift = 0
-y_shift = 0
+import numpy as np
 
 
 def getCenter(matrix):
@@ -15,6 +13,7 @@ def my_round(var):
     return [int(round(var[0])), int(round(var[1]))]
 
 
+# Функция поиска новых координат точек, используется матрица поворота и сдвига точки вращения
 def findCoord(point, alpha, image):
     center = getCenter(image)
     pointB1 = [(point[0] - center[0]) * cos(radians(alpha)) + (point[1] - center[1]) * sin(radians(alpha)) + center[0],
@@ -22,11 +21,7 @@ def findCoord(point, alpha, image):
     return my_round(pointB1)
 
 
-def addToRes(point, res):
-    x_s, y_s = res.shape[0] - res.shape[0] / 4  # start point; analog 0,0
-    res[x_s + x_shift][y_s + y_shift] = point
-
-
+# Ищем новые координаты границ рисунка, получаем 4х угольник
 def add_points(image, angle):
     size = image.shape[1], image.shape[0]
     res = []
@@ -43,8 +38,8 @@ def add_points(image, angle):
         res.append(findCoord([0, i], angle, image))
 
     # for j in range(0, size[1] + 1, 1):
-        # for i in range(0, size[0] + 1, 1):
-            # res.append(findCoord([i, j], angle, image))
+    # for i in range(0, size[0] + 1, 1):
+    # res.append(findCoord([i, j], angle, image))
     print(image.shape)
     print(len(res))
     return res
@@ -59,6 +54,7 @@ def L(x1, y1, x2, y2):
     return sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
+# Ограничивает границы по размеру окна, получаем многоугольник
 def filter_border(borders, w, h):
     res = []
     for i in range(len(borders)):
@@ -78,8 +74,9 @@ def filter_border(borders, w, h):
     return res
 
 
-def getRect(borders, center):
-    point = []
+def getNewMatrix(input, borders):
+    res = np.zeros(input.shape)
+    print(res.shape)
 
 
 def main():
@@ -111,6 +108,7 @@ def main():
     # getResult([0, h], angle, rotated)
     new_borders = add_points(rotated, angle)
     filtered = filter_border(new_borders, w, h)
+    getNewMatrix(rotated, filtered)
 
     print(len(filtered))
     cv2.imshow("Rotated image", rotated)

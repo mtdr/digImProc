@@ -142,7 +142,7 @@ def cadane(matrix):
                     P2 = [i, j]
                 if t <= 0:
                     t = 0
-                    h = j + 1  # intel error
+                    h = j + 1  # was i = j+1 - intel error
     return M, P1, P2
 
 
@@ -243,7 +243,7 @@ def main(image, angle, k_i, inter_k):
     interpol = cv2.resize(cropped, dim1, interpolation=inter_k + 1)
     cv2.imshow("Interpolated image", interpol)
     cv2.waitKey(0)
-    cv2.imwrite('01.bmp', interpol)
+    cv2.imwrite('result.bmp', interpol)
 
 
 def intel_alg(matr):
@@ -267,7 +267,7 @@ if len(sys.argv) == 5:
     k = sys.argv[3]
     inter = sys.argv[4]
 else:
-    img = cv2.imread("big.jpg")
+    img = cv2.imread("tram.jpg")
     ang = 350
     k = 0.5
     inter = 2  # linear - 0, cubic - 1, area - 2
